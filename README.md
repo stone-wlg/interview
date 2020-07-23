@@ -19,32 +19,48 @@ Imagine that you meet with a small gaming startup company in the early stages of
 - Making the player experience very low latency even though a large portion of their user base will be from far away
 - Effective distribution of load a self-healing infrastructure that recovers
 
-## Solution Abstract and Benefits
-
-Solution Abstract:
-- Load Balance: nginx
-- Microservices: Kubernetes
-- Storage: 
-  - metadata and transaction data: mysql or postgresql
-
-  - session data: redis
-  - log data: elasticsearch, fluentd and kibana
-  - history data: hadoop, cassandra
-
-Benefits:
-- free
-- open source
-
-
 # Solution Design
 
 ## Architecture Overview 
 
+![img](./aws-interview-architecture-overview.png)
+
 ## Design Details 
 
-### xxx 
+### RDS for web app
 
-### xxx 
+Analysis:
+- write less than read
+- transation ex: payments  
+
+Database:
+- Aurora
+- Mysql
+
+### NOSQL for game app about 1 year
+
+Database:
+- DocumentDB
+- Cassandra
+- Mongodb
+
+### Cache for game ranking
+
+- ElatiCache
+- Redis
+
+### Data Warehouse for history data
+
+- Redshift
+- EMR
+
+### ETL
+
+- Glue
+
+### ML for recommendation feature
+
+- SageMaker
  
 ## Summary 
 
