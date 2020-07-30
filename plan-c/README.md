@@ -29,9 +29,9 @@ This is only for one region, like China. If they decide to launch other regions,
 
 ## Design Details 
 
-### Keyspaces
+### MongoDB
 
-![img](./aws-interview-architecture-keyspaces.png)
+![img](./aws-interview-architecture-database.png)
 
 QAs:
 

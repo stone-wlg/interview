@@ -23,8 +23,6 @@ Imagine that you meet with a small gaming startup company in the early stages of
 
 ## Architecture Overview 
 
-This is only for one region, like China. If they decide to launch other regions, they just launch the same architecture more times.
-
 ![img](./aws-interview-architecture-overview.png)
 
 ## Design Details 

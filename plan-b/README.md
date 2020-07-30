@@ -29,13 +29,35 @@ This is only for one region, like China. If they decide to launch other regions,
 
 ## Design Details 
 
-### Keyspaces
+### Aurora for Web App
+
+QAs:
+
+Q: They would store various data in database such as metadata, transaction data etc. 
+- Yes
+
+Q: Most of the operation of the data is quite simple query, but also has some complex query.
+- Yes
+
+Q: The number of concurrent access to database could be very large and not stable.
+- We assume that there is only a little throughput from Web App
+
+Q: They want the performance won’t be degrade even the size of data grows up rapidly.
+- We could do read/write splitting, ex: setup 1 or more replicas for read.
+
+Q: The history data in v1.0 database should be migrated to v2.0 database.
+- [AWS Database Migration Service](https://ap-southeast-1.console.aws.amazon.com/dms/v2/home?region=ap-southeast-1#firstRun)
+
+Q: They would like to develop the global uniform game in the future. So they need the database can be launched in many regions to speed up the data access of the players in the world.
+- We could setup new Aurora cluster for each region
+
+### Keyspaces for Game App
 
 ![img](./aws-interview-architecture-keyspaces.png)
 
 QAs:
 
-Q: They would store various data in database such as metadata, transaction data, session data, log data etc. 
+Q: They would store various data in database such as metadata, session data, log data etc. 
 - Yes
 
 Q: Most of the operation of the data is quite simple query, but also has some complex query.
