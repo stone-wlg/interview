@@ -23,8 +23,6 @@ Imagine that you meet with a small gaming startup company in the early stages of
 
 ## Architecture Overview 
 
-This is only for one region, like China. If they decide to launch other regions, they just launch the same architecture more times.
-
 ![img](./aws-interview-architecture-overview.png)
 
 ## Design Details 
@@ -40,24 +38,23 @@ Q: They would store various data in database such as metadata, transaction data,
 
 Q: Most of the operation of the data is quite simple query, but also has some complex query.
 - For quite simple query, it must be query by primay key, although we can make secondary index.
-- For some complex query, we can make materialized view or wide table.
+- For some complex query, we can make document model.
 
 Q: The number of concurrent access to database could be very large and not stable.
 - We could setup a small datacenter at beginning for saving cost
-- We could scale datacenter by adding new nodes, cassandra will balance data by itself. 
+- We could scale datacenter by adding new nodes, mongodb will balance data by itself. 
 
 Q: They want the performance won’t be degrade even the size of data grows up rapidly.
-- We could do read/write splitting, ex: setup 2 datacenters, one for read, one for write.
+- We could add more shards.
 
 Q: The history data in v1.0 database should be migrated to v2.0 database.
-- We could use [COPY FROM](https://docs.datastax.com/en/ddaccql/doc/cql/cql_reference/cqlsh_commands/cqlshCopyFrom.html) to import data with csv format
+- 
 
 Q: Their games just need 1 year data in most case, the history data would be used for analytics.
 - We could set TTL for the data which need only 1 year
 
 Q: They would like to develop the global uniform game in the future. So they need the database can be launched in many regions to speed up the data access of the players in the world.
 - We could setup new datacenters in many regions
-- Set correct datacenter in your applications
 
 
 ### Elasticsearch Service
