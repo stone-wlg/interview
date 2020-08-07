@@ -49,3 +49,35 @@ Charge type	Price
 Write request units	$1.6508 per million write request units
 Read request units	$0.331 per million read request units
 
+- Apache Cassandra on EC2:
+  - 3 nodes
+- Amazon Keyspaces:
+  - On-Demand Capacity Mode: Amazon Keyspaces can scale the throughput capacity for your table up to any previously reached traffic level instantly, and then back down when application traffic decreases. 
+    - On-demand mode is a good option if any of the following is true:
+      - You create new tables with unknown workloads. 
+      - You have unpredictable application traffic.
+      - You prefer the ease of paying for only what you use.
+  - Provisioned Throughput Capacity Mode: You specify the number of reads and writes per second that are required for your application.
+    - Provisioned throughput capacity mode is a good option if any of the following is true:
+      - You have predictable application traffic.
+      - You run applications whose traffic is consistent or ramps up gradually.
+      - You can forecast capacity requirements to optimize price.
+
+| Charge Type | Price |
+| - | - |
+| On-demand mode, WRU (The maximum write throughput per second 40,000), 1 WRU = 1 LOCAL_QUORUM (1KB) | $1.6508 per million (1GB) |
+| On-demand mode, RRU (The maximum read throughput per second 40,000), 1 RRU = 1 LOCAL_QUORUM (4KB) = 2 LOCAL_ONE (8KB) | $0.331 per million (4GB/8GB) |
+| Provision mode, WCU (The maximum write throughput per second 40,000), 1 WCU = 1 LOCAL_QUORUM (1KB) | $0.0008538 per hour |
+| Provision mode, RCU (The maximum read throughput per second 40,000), 1 RCU = 1 LOCAL_QUORUM (4KB) = 2 LOCAL_ONE (8KB) | $0.0001708 per hour |
+| Storage | $0.34 per GB-month |
+| PITR | $0.272 per GB-month |
+| Backup restore | $0.171 per GB |
+| All data transfer in |	$0.00 per GB |
+| Data Transfer OUT | |
+| | Up to 1 GB/month	$0.00 per GB |
+| | Next 9.999 TB/month	$0.12 per GB |
+| | Next 40 TB/month	$0.085 per GB | 
+| | Next 100 TB/month	$0.082 per GB | 
+| | Greater than 150 TB/month	$0.08 per GB |
+
+*** As part of the AWS Free Tier, you can get started with Amazon Keyspaces for free. For the first three months, you are offered a monthly free tier of 30 million on-demand write request units, 30 million on-demand read request units, and 1 GB of storage (limit of one free tier per payer account). Your free tier starts from the first month when you create your first Amazon Keyspaces resource. ***
