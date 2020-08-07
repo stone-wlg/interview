@@ -48,29 +48,35 @@ Maintains: How do we use Apache Cassandra or Amazon Keyspaces
 
 | Item | Apache Cassandra | Amazon Keyspaces |
 | - | - | - |
-| Monitoring | Self managed | There is a Dashboard for monitoring Performance and Error |
-| Encryption | Self managed | Encryption at rest is automatically enabled when you create a new Amazon Keyspaces table and all client connections require Transport Layer Security (TLS).  |
-| No servers to manage | Self managed | You don’t have to provision, patch, or manage servers, which allows you to focus on building better applications. Capacity is on-demand—you pay for only the resources you use and you don’t have to plan for peak workloads. |
+| Monitoring | Prometheus, Grafana | There is a Dashboard for monitoring Performance and Error |
+| Encryption | Openssl | Encryption at rest is automatically enabled when you create a new Amazon Keyspaces table and all client connections require Transport Layer Security (TLS).  |
+| No servers to manage | EC2 | You don’t have to provision, patch, or manage servers, which allows you to focus on building better applications. Capacity is on-demand—you pay for only the resources you use and you don’t have to plan for peak workloads. |
 | Highly available and secure | Self managed | Tables are encrypted by default and replicated three times in multiple AWS Availability Zones for high availability. Secure your data with access management, and use performance monitoring to keep your applications running smoothly. |
-| Performance at scale | Self managed | Consistent, single-digit-millisecond response times at any scale. Build applications with virtually unlimited throughput and storage, that can serve thousands of requests per second without capacity planning. |
-| Recovery | Self managed | Point-in-time recovery (PITR) helps protect your Amazon Keyspaces tables from accidental write or delete operations by providing you continuous backups of your table data for 35 days (at no additional cost) |
+| Performance at scale | Add more EC2 | Consistent, single-digit-millisecond response times at any scale. Build applications with virtually unlimited throughput and storage, that can serve thousands of requests per second without capacity planning. |
+| Recovery | Snapshot | Point-in-time recovery (PITR) helps protect your Amazon Keyspaces tables from accidental write or delete operations by providing you continuous backups of your table data for 35 days (at no additional cost) |
 
-Costs: [Amazon Keyspaces (for Apache Cassandra) pricing](https://amazonaws-china.com/keyspaces/pricing/), Assumption as below
-- 40,000 write per sec, data request size is 1KB
-- 40,000 read per sec, data return size is 4KB
+Costs: Assumption as below
+- 1 datacenter in a region
+- 3 replicas of data
 - 1TB of data total
+- 40,000 write per sec with LOCAL_QUORUM, each request data size is 1KB
+- 40,000 read per sec with LOCAL_QUORUM, each response data size is 4KB
 
 | Item | Price | Comments |
 | - | - | - |
-| Apache Cassandra on EC2 | ~$300 | 3 nodes with 2TB volumn |
-| Amazon Keyspaces | ~$250 | With provisioned capacity mode |
+| Apache Cassandra on EC2 | ~$300 per month | 3 nodes with 2TB volumn |
+| Amazon Keyspaces | ~$250 per month | On-demand mode |
 
 Summary:
 | Item | Apache Cassandra | Amazon Keyspaces |
 | - | - | - |
-| Features | Same | Same |
+| Features | All | Almost |
 | Maintains | Self managed | Most of works managed by AWS |
 | Costs | High | Low | 
+
+References:
+- [Amazon Keyspaces (for Apache Cassandra) pricing](https://amazonaws-china.com/keyspaces/pricing/)
+- [Quotas for Amazon Keyspaces (for Apache Cassandra)](https://docs.aws.amazon.com/keyspaces/latest/devguide/quotas.html)
 
 QAs:
 
