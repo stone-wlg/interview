@@ -58,25 +58,27 @@ Maintains: How do we use Apache Cassandra or Amazon Keyspaces
 Costs: Assumption as below
 - 1 datacenter in a region
 - 3 replicas of data
-- 1TB of data total
-- 40,000 write per sec with LOCAL_QUORUM, each request data size is 1KB
-- 40,000 read per sec with LOCAL_QUORUM, each response data size is 4KB
+- 1 Gbps network bandwidth
+- 1,000 write per sec with LOCAL_QUORUM, each request data size is 1KB, 1MBs, ~30TB per year disk usage 
+- 1,000 read per sec with LOCAL_QUORUM, each response data size is 4KB, 4MBs, ~125TB per year
 
 | Item | Price | Comments |
 | - | - | - |
-| Apache Cassandra on EC2 | ~$300 per month | 3 nodes with 2TB volumn |
-| Amazon Keyspaces | ~$250 per month | On-demand mode |
+| Apache Cassandra on EC2 | ~$107,000 per year | 9 ec2 with t2.2xlarge: $2,374*9=$21,000, Storage 200TB: $0.12*30,000GB*12=$86,000 |
+| Amazon Keyspaces | ~$183,000 per year | On-demand mode, WRU: $1.6508*30,000GB=$50,000, RRU: $0.331*30,000GB=$10,000, Storage: $0.34*30,000GB*12=$123,000 |
 
 Summary:
 | Item | Apache Cassandra | Amazon Keyspaces |
 | - | - | - |
 | Features | All | Almost |
 | Maintains | Self managed | Most of works managed by AWS |
-| Costs | High | Low | 
+| Costs | ~$107,000 per year | ~$183,000 per year | 
 
 References:
 - [Amazon Keyspaces (for Apache Cassandra) pricing](https://amazonaws-china.com/keyspaces/pricing/)
 - [Quotas for Amazon Keyspaces (for Apache Cassandra)](https://docs.aws.amazon.com/keyspaces/latest/devguide/quotas.html)
+- [Standard and Convertible Reserved Instances Pricing](https://amazonaws-china.com/ec2/pricing/reserved-instances/pricing/)
+- [Amazon EBS pricing](https://amazonaws-china.com/ebs/pricing/)
 
 QAs:
 
