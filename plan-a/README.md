@@ -37,7 +37,7 @@ Features: Why do we choose Apache Cassandra or Amazon Keyspaces
 
 - Fault Tolerant: Data is automatically replicated to multiple nodes for fault-tolerance. Replication across multiple data centers is supported. Failed nodes can be replaced with no downtime.
 - Decentralized: There are no single points of failure. There are no network bottlenecks. Every node in the cluster is identical.
-- Scalable: Some of the largest production deployments include Apple's, with over 75,000 nodes storing over 10 PB of data, Netflix (2,500 nodes, 420 TB, over 1 trillion requests per day), Chinese search engine Easou (270 nodes, 300 TB, over 800 million requests per day), and eBay (over 100 nodes, 250 TB).
+- Scalable: Some of the largest production deployments include Apple's, with over 75,000 nodes storing over 10 PB of data, Netflix (2,500 nodes, 420 TB, over 1 trillion requests per day), Chinese search engine Easou (270 nodes, 300 TB, over 800 million requests per day),  and eBay (over 100 nodes, 250 TB).
 - Durable: Cassandra is suitable for applications that can't afford to lose data, even when an entire data center goes down.
 - Elastic: Read and write throughput both increase linearly as new machines are added, with no downtime or interruption to applications.
 - Guarantee Replication: Choose between synchronous or asynchronous replication for each update. Highly available asynchronous operations are optimized with features like Hinted Handoff and Read Repair.
@@ -49,9 +49,8 @@ Maintains: How do we use Apache Cassandra or Amazon Keyspaces
 | Item | Apache Cassandra | Amazon Keyspaces |
 | - | - | - |
 | Monitoring | Prometheus, Grafana | There is a Dashboard for monitoring Performance and Error |
-| Encryption | Openssl | Encryption at rest is automatically enabled when you create a new Amazon Keyspaces table and all client connections require Transport Layer Security (TLS).  |
 | No servers to manage | EC2 | You don’t have to provision, patch, or manage servers, which allows you to focus on building better applications. Capacity is on-demand—you pay for only the resources you use and you don’t have to plan for peak workloads. |
-| Highly available and secure | Self managed | Tables are encrypted by default and replicated three times in multiple AWS Availability Zones for high availability. Secure your data with access management, and use performance monitoring to keep your applications running smoothly. |
+| Highly available and secure | replicas, openssl | Tables are encrypted by default and replicated three times in multiple AWS Availability Zones for high availability. Secure your data with access management, and use performance monitoring to keep your applications running smoothly. |
 | Performance at scale | Add more EC2 | Consistent, single-digit-millisecond response times at any scale. Build applications with virtually unlimited throughput and storage, that can serve thousands of requests per second without capacity planning. |
 | Recovery | Snapshot | Point-in-time recovery (PITR) helps protect your Amazon Keyspaces tables from accidental write or delete operations by providing you continuous backups of your table data for 35 days (at no additional cost) |
 
@@ -75,15 +74,18 @@ Summary:
 | Costs | ~$107,000 per year | ~$183,000 per year | 
 
 References:
+- [Security](https://docs.aws.amazon.com/keyspaces/latest/devguide/security.html)
 - [Amazon Keyspaces (for Apache Cassandra) pricing](https://amazonaws-china.com/keyspaces/pricing/)
 - [Quotas for Amazon Keyspaces (for Apache Cassandra)](https://docs.aws.amazon.com/keyspaces/latest/devguide/quotas.html)
 - [Standard and Convertible Reserved Instances Pricing](https://amazonaws-china.com/ec2/pricing/reserved-instances/pricing/)
 - [Amazon EBS pricing](https://amazonaws-china.com/ebs/pricing/)
+- [Preparing SSL certificates for production](https://docs.datastax.com/en/ddacsecurity/doc/ddacsecurity/secureSSLCertWithCA.html)
+- [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter)
 
 QAs:
 
 Q: They would store various data in database such as metadata, transaction data, session data, log data etc. 
-- Yes
+- Yes, but there is a limit supported for transaction
 
 Q: Most of the operation of the data is quite simple query, but also has some complex query.
 - For quite simple query, it must be query by primay key, although we can make secondary index.
@@ -112,6 +114,20 @@ Q: They would like to develop the global uniform game in the future. So they nee
 ### Elasticsearch Service
 
 ![img](./aws-interview-architecture-elasticsearch.png)
+
+Features: Why do we choose Elasticesearch Service, When we meet some complex query in Cassandra, there is not too much ways. so we need a third component to do it, Elasticsearch
+- Scale
+- Security
+- Stability
+- Flexibility
+- Integration with Popular Services
+
+Maintains: How to use Elasticsearch Service
+| Item | Elasticsearch on EC2 | Elasticesearch Service |
+| - | - | - |
+| Scale | Add more EC2 | |
+| Security | Search Guard |  |
+| Stability | Add more cluster | |
 
 QAs:
 
