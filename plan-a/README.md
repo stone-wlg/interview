@@ -119,11 +119,12 @@ Why do we choose Elasticesearch Service?
 - When we meet some complex query in Cassandra, there is not too much ways. so we need a third component to do it, Elasticsearch
 
 How to use Elasticsearch Service?
-| Item | Elasticsearch on EC2 | Elasticesearch Service |
-| - | - | - |
-| Scale | Add more EC2 | Managed By AWS |
-| Security | Search Guard | Managed By AWS |
-| Stability | Add more cluster | Managed By AWS |
+- Setup Elasticsearch Cluster for each region
+
+Costs:
+
+References:
+- [Amazon Elasticsearch Service pricing](https://amazonaws-china.com/elasticsearch-service/pricing/)
 
 QAs:
 
