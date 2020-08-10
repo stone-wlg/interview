@@ -49,7 +49,7 @@ Maintains: How do we use Apache Cassandra or Amazon Keyspaces
 | Item | Apache Cassandra | Amazon Keyspaces |
 | - | - | - |
 | Monitoring | Prometheus, Grafana | There is a Dashboard for monitoring Performance and Error |
-| No servers to manage | EC2 | You don’t have to provision, patch, or manage servers, which allows you to focus on building better applications. Capacity is on-demand—you pay for only the resources you use and you don’t have to plan for peak workloads. |
+| No servers to manage | EC2 | You don’t have to provision, patch, or manage servers, which allows you to focus on building better applications. Capacity is on-demand you pay for only the resources you use and you don’t have to plan for peak workloads. With provisioned capacity mode, you specify the number of reads and writes per second that you expect your application to perform. |
 | Highly available and secure | replicas, openssl | Tables are encrypted by default and replicated three times in multiple AWS Availability Zones for high availability. Secure your data with access management, and use performance monitoring to keep your applications running smoothly. |
 | Performance at scale | Add more EC2 | Consistent, single-digit-millisecond response times at any scale. Build applications with virtually unlimited throughput and storage, that can serve thousands of requests per second without capacity planning. |
 | Recovery | Snapshot | Point-in-time recovery (PITR) helps protect your Amazon Keyspaces tables from accidental write or delete operations by providing you continuous backups of your table data for 35 days (at no additional cost) |
@@ -121,10 +121,21 @@ Why do we choose Elasticesearch Service?
 How to use Elasticsearch Service?
 - Setup Elasticsearch Cluster for each region
 
-Costs:
+Costs: Amazon Elasticsearch Service estimate
+| Item | Price |
+| - | - |
+| Elasticsearch data instance cost (monthly) | 0.00 USD |
+| Elasticsearch dedicated master instance cost (monthly) | 0.00 USD |
+| UltraWarm total cost (monthly) | 5,223.46 USD |
+| Elasticsearch EBS storage cost (monthly) | 4,976.64 USD |
+| Total monthly cost: | 10,200.10 USD |
+| Elasticsearch data instance cost (upfront) | 11,634.00 USD |
+| Elasticsearch dedicated master instance cost (upfront) | 11,634.00 USD |
+| Total upfront cost: | 23,268.00 USD |
 
 References:
 - [Amazon Elasticsearch Service pricing](https://amazonaws-china.com/elasticsearch-service/pricing/)
+- [Configure Amazon Elasticsearch Service](https://calculator.aws/#/createCalculator)
 
 QAs:
 
@@ -190,3 +201,261 @@ QAs:
 Q: They would like to add recommendation feature based on relationships between information such as player interests, friends, and purchase history etc.
 - Yes
  
+## For example
+
+### Data model in Keyspaces or Cassandra:
+
+```sql
+CREATE KEYSPACE IF NOT EXISTS game WITH replication = {'class': 'NetworkTopologyStrategy', 'datacenter1': 1};
+```
+
+- users table
+  - name field query frequence is more than others fields, and it is unique in system
+  - if we want to query by other fields, email, phone or age, we could import these fields or all fields into Elasticsearch, and update other fields when user info changed, user info is seldom to update.
+
+```sql
+CREATE TABLE IF NOT EXISTS game.users (
+  id timeuuid,
+  name text,
+  password text, -- MD5
+  age int,
+  email text,
+  phone text,
+  created_at timestamp,
+  updated_at timestamp,
+  PRIMARY KEY (name)
+);
+```
+
+- orders table
+  - query orders by user_name
+  - order by id DESC can make query efficiently
+  - using Lightweight for transactions if necessary
+
+```sql
+CREATE TABLE IF NOT EXISTS game.orders (
+  id timeuuid,
+  user_name text,
+  item text,
+  amount int,
+  price decimal,
+  status text, -- [paid|unpaid]
+  created_at timestamp,
+  updated_at timestamp,
+  PRIMARY KEY (user_name, id)
+) WITH CLUSTERING ORDER BY (id DESC);
+```
+
+- messages table
+  - query message by user_name, both sender and receiver
+  - order by id DESC can make query efficiently
+  - set ttl 1 year
+
+```sql
+CREATE TABLE IF NOT EXISTS game.messages_by_sender (
+  sender_user_name text,
+  receiver_user_name text,
+  id timestamp,
+  message text,
+  created_at timestamp,
+  updated_at timestamp,
+  PRIMARY KEY (sender_user_name, receiver_user_name, id)
+) WITH CLUSTERING ORDER BY (receiver_user_name ASC, id DESC)
+  AND default_time_to_live = 31536000;
+
+-- double write
+
+CREATE TABLE IF NOT EXISTS game.messages_by_receiver (
+  sender_user_name text,
+  receiver_user_name text,
+  id timestamp,
+  message text,
+  created_at timestamp,
+  updated_at timestamp,
+  PRIMARY KEY (receiver_user_name, sender_user_name, id)
+) WITH CLUSTERING ORDER BY (sender_user_name ASC, id DESC)
+  AND default_time_to_live = 31536000;
+
+-- or MATERIALIZED VIEW
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS game.messages_by_receiver 
+  AS SELECT * 
+  FROM game.messages_by_sender
+  WHERE receiver_user_name IS NOT NULL
+  AND sender_user_name IS NOT NULL
+  AND id IS NOT NULL
+  PRIMARY KEY (receiver_user_name, sender_user_name, id)
+  WITH CLUSTERING ORDER BY (sender_user_name ASC, id DESC);
+
+-- or import message data into Elasticsearch
+
+```
+
+### Data templates in Elasticsearch or Elasticsearch Service
+
+There is no need fulltext index, so fields type just keyword.
+
+- users template
+
+```json
+PUT _index_template/users
+{
+  "index_patterns": [
+    "users-*"
+  ],
+  "template": {
+    "settings": {
+      "index": {
+        "refresh_interval": "1s",
+        "number_of_shards": "3",
+        "number_of_replicas": "2"
+      }
+    },
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "id": {
+          "type": "keyword"
+        },
+        "name": {
+          "type": "keyword"
+        },
+        "age": {
+          "type": "short"
+        },        
+        "email": {
+          "type": "keyword"
+        },
+        "phone": {
+          "type": "keyword"
+        },
+        "created_at": {
+          "type": "date"
+        }
+      }
+    }
+  },
+  "composed_of": [],
+  "priority": 1,
+  "version": 1
+}
+
+// update user info incremental
+// or we also could build new index daily
+POST /_aliases
+{
+  "actions" : [
+    { "add" : { "index" : "users-20200810", "alias" : "users" } },
+    { "remove" : { "index" : "users-20200809", "alias" : "users" } }    
+  ]
+}
+```
+
+- orders template
+  - keeping all orders history
+  - creating new index for orders monthly
+
+```json
+PUT _index_template/orders
+{
+  "index_patterns": [
+    "orders-*"
+  ],
+  "template": {
+    "settings": {
+      "index": {
+        "refresh_interval": "1s",
+        "number_of_shards": "3",
+        "number_of_replicas": "2"
+      }
+    },
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "id": {
+          "type": "keyword"
+        },
+        "user_name": {
+          "type": "keyword"
+        },
+        "amount": {
+          "type": "integer"
+        },        
+        "price": {
+          "type": "double"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "created_at": {
+          "type": "date"
+        }
+      }
+    }
+  },
+  "composed_of": [],
+  "priority": 1,
+  "version": 1
+}
+
+// we can query orders-202008 for a range data or orders for all data
+POST /_aliases
+{
+  "actions" : [
+    { "add" : { "index" : "orders-*", "alias" : "orders" } }
+  ]
+}
+```
+
+- messages template
+  - we do not search by message
+  - keeping 1 year message history
+  - creating new index for messages daily
+
+```json
+{
+  "index_patterns": [
+    "messages-*"
+  ],
+  "template": {
+    "settings": {
+      "index": {      
+        "refresh_interval": "1s",
+        "number_of_shards": "3",
+        "number_of_replicas": "2"
+      }
+    },
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "id": {
+          "type": "keyword"
+        },
+        "sender_user_name": {
+          "type": "keyword"
+        },
+        "receiver_user_name": {
+          "type": "keyword"
+        },
+        "message": {
+          "index": false
+        },        
+        "created_at": {
+          "type": "date"
+        }
+      }
+    }
+  },
+  "composed_of": [],
+  "priority": 1,
+  "version": 1
+}
+
+// we can query messages-20200808 for a range data or messages for all data
+POST /_aliases
+{
+  "actions" : [
+    { "add" : { "index" : "messages-*", "alias" : "messages" } }
+  ]
+}
+```
