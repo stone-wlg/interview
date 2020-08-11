@@ -82,128 +82,7 @@ References:
 - [Preparing SSL certificates for production](https://docs.datastax.com/en/ddacsecurity/doc/ddacsecurity/secureSSLCertWithCA.html)
 - [Prometheus JMX Exporter](https://github.com/prometheus/jmx_exporter)
 
-QAs:
-
-Q: They would store various data in database such as metadata, transaction data, session data, log data etc. 
-- Yes, but there is a limit supported for transaction
-
-Q: Most of the operation of the data is quite simple query, but also has some complex query.
-- For quite simple query, it must be query by primay key, although we can make secondary index.
-- For some complex query, we can make materialized view or wide table.
-
-Q: The number of concurrent access to database could be very large and not stable.
-- We could setup a small datacenter at beginning for saving cost
-- We could scale datacenter by adding new nodes, cassandra will balance data by itself. 
-
-Q: They want the performance won’t be degrade even the size of data grows up rapidly.
-- We could do read/write splitting, ex: setup 2 datacenters, one for read, one for write.
-
-Q: The history data in v1.0 database should be migrated to v2.0 database.
-- We could use [COPY FROM](https://docs.datastax.com/en/ddaccql/doc/cql/cql_reference/cqlsh_commands/cqlshCopyFrom.html) to import data with csv format
-- Modify the default for the COPY FROM option in the configuration file path_to_file/.cassandra/cqlshrc and add the following lines.[Optimize](https://amazonaws-china.com/blogs/database/loading-data-into-amazon-mcs-with-cqlsh/)
-
-Q: Their games just need 1 year data in most case, the history data would be used for analytics.
-- We could set TTL for the data which need only 1 year
-
-Q: They would like to develop the global uniform game in the future. So they need the database can be launched in many regions to speed up the data access of the players in the world.
-- We could setup new datacenters in many regions
-- Authentication provider: Create the authentication provider with the PlainTextAuthProvider class. ServiceUserName and ServicePassword should match the user name and password you obtained when you generated the service-specific credentials by following the steps in Generate Service-Specific Credentials.
-- Local data center: Set the value for local-datacenter to the Region you're connecting to. For example, if the application is connecting to cassandra.us-east-2.amazonaws.com, then set the local data center to us-east-2. For all available AWS Regions, see Service Endpoints for Amazon Keyspaces.
-- SSL/TLS: Initialize the SSLEngineFactory by adding a section in the configuration file with a single line that specifies the class with class = DefaultSslEngineFactory. Provide the path to the trustStore file and the password that you created previously.
-
-### Elasticsearch Service
-
-![img](./aws-interview-architecture-elasticsearch.png)
-
-Why do we choose Elasticesearch Service?
-- When we meet some complex query in Cassandra, there is not too much ways. so we need a third component to do it, Elasticsearch
-
-How to use Elasticsearch Service?
-- Setup Elasticsearch Cluster for each region
-
-Costs: Amazon Elasticsearch Service estimate
-| Item | Price |
-| - | - |
-| Elasticsearch data instance cost (monthly) | 0.00 USD |
-| Elasticsearch dedicated master instance cost (monthly) | 0.00 USD |
-| UltraWarm total cost (monthly) | 5,223.46 USD |
-| Elasticsearch EBS storage cost (monthly) | 4,976.64 USD |
-| Total monthly cost: | 10,200.10 USD |
-| Elasticsearch data instance cost (upfront) | 11,634.00 USD |
-| Elasticsearch dedicated master instance cost (upfront) | 11,634.00 USD |
-| Total upfront cost: | 23,268.00 USD |
-
-References:
-- [Amazon Elasticsearch Service pricing](https://amazonaws-china.com/elasticsearch-service/pricing/)
-- [Configure Amazon Elasticsearch Service](https://calculator.aws/#/createCalculator)
-
-QAs:
-
-Q: How to load streaming data into Elasticsearch
-- Application write directly
-- Logstash
-- Lambda
-
-```python
-import boto3
-import json
-import requests
-from requests_aws4auth import AWS4Auth
-
-region = '' # e.g. us-west-1
-service = 'es'
-credentials = boto3.Session().get_credentials()
-awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, service, session_token=credentials.token)
-
-host = '' # the Amazon ES domain, including https://
-headers = { "Content-Type": "application/json" }
-
-def lambda_handler(event, context):
-  #print("Received event: " + json.dumps(event, indent=2))
-
-  index = event['index']
-  url = host + '/' + index + '/_doc/'
-
-  operation = event['httpMethod']
-  if operation == 'DELETE':
-    id = event['id']
-    return requests.delete(url + id, auth=awsauth)
-  else:
-    document = event['doc']
-    return requests.post(url, auth=awsauth, json=document, headers=headers)     
-```
-
-Q: Most of the operation of the data is quite simple query, but also has some complex query.
-- We could use elasticsearch for complex query, ex: query friends by name, age or email
-- We could only use keyword type for string in elasticsearch for query if we do not care about fulltext search.
-
-
-### ElatiCache
-
-QAs:
-
-Q: They would like to develop the global uniform game in the future. So they need the database can be launched in many regions to speed up the data access of the players in the world.
-- We could load some data (lookup, static, session or hot data) from cassandra into Redis Cluster to speed up the data access
-
-
-### Glue for ETL
-
-QAs:
-
-Q: Their games just need 1 year data in most case, the history data would be used for analytics.
-- We could archive history data into S3 with csv format for analytics, like recommendation feature. [Connect to Cassandra Data in AWS Glue Jobs Using JDBC](https://www.cdata.com/kb/tech/cassandra-jdbc-aws-glue.rst)
-
-
-### Personalize for recommendation
-
-QAs:
-
-Q: They would like to add recommendation feature based on relationships between information such as player interests, friends, and purchase history etc.
-- Yes
- 
-## For example
-
-### Data model in Keyspaces or Cassandra:
+Data model in Keyspaces or Cassandra:
 
 ```sql
 CREATE KEYSPACE IF NOT EXISTS game WITH replication = {'class': 'NetworkTopologyStrategy', 'datacenter1': 1};
@@ -291,9 +170,62 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS game.messages_by_receiver
 
 ```
 
-### Data templates in Elasticsearch or Elasticsearch Service
+QAs:
 
-There is no need fulltext index, so fields type just keyword.
+Q: They would store various data in database such as metadata, transaction data, session data, log data etc. 
+- Yes, but there is a limit supported for transaction
+
+Q: Most of the operation of the data is quite simple query, but also has some complex query.
+- For quite simple query, it must be query by primay key, although we can make secondary index.
+- For some complex query, we can make materialized view or wide table.
+
+Q: The number of concurrent access to database could be very large and not stable.
+- We could setup a small datacenter at beginning for saving cost
+- We could scale datacenter by adding new nodes, cassandra will balance data by itself. 
+
+Q: They want the performance won’t be degrade even the size of data grows up rapidly.
+- We could do read/write splitting, ex: setup 2 datacenters, one for read, one for write.
+
+Q: The history data in v1.0 database should be migrated to v2.0 database.
+- We could use [COPY FROM](https://docs.datastax.com/en/ddaccql/doc/cql/cql_reference/cqlsh_commands/cqlshCopyFrom.html) to import data with csv format
+- Modify the default for the COPY FROM option in the configuration file path_to_file/.cassandra/cqlshrc and add the following lines.[Optimize](https://amazonaws-china.com/blogs/database/loading-data-into-amazon-mcs-with-cqlsh/)
+
+Q: Their games just need 1 year data in most case, the history data would be used for analytics.
+- We could set TTL for the data which need only 1 year
+
+Q: They would like to develop the global uniform game in the future. So they need the database can be launched in many regions to speed up the data access of the players in the world.
+- We could setup new datacenters in many regions
+- Authentication provider: Create the authentication provider with the PlainTextAuthProvider class. ServiceUserName and ServicePassword should match the user name and password you obtained when you generated the service-specific credentials by following the steps in Generate Service-Specific Credentials.
+- Local data center: Set the value for local-datacenter to the Region you're connecting to. For example, if the application is connecting to cassandra.us-east-2.amazonaws.com, then set the local data center to us-east-2. For all available AWS Regions, see Service Endpoints for Amazon Keyspaces.
+- SSL/TLS: Initialize the SSLEngineFactory by adding a section in the configuration file with a single line that specifies the class with class = DefaultSslEngineFactory. Provide the path to the trustStore file and the password that you created previously.
+
+### Elasticsearch Service
+
+![img](./aws-interview-architecture-elasticsearch.png)
+
+Why do we choose Elasticesearch Service?
+- When we meet some complex query in Cassandra, there is not too much ways. so we need a third component to do it, Elasticsearch
+
+How to use Elasticsearch Service?
+- Setup Elasticsearch Cluster for each region
+
+Costs: Amazon Elasticsearch Service estimate
+| Item | Price |
+| - | - |
+| Elasticsearch data instance cost (monthly) | 0.00 USD |
+| Elasticsearch dedicated master instance cost (monthly) | 0.00 USD |
+| UltraWarm total cost (monthly) | 5,223.46 USD |
+| Elasticsearch EBS storage cost (monthly) | 4,976.64 USD |
+| Total monthly cost: | 10,200.10 USD |
+| Elasticsearch data instance cost (upfront) | 11,634.00 USD |
+| Elasticsearch dedicated master instance cost (upfront) | 11,634.00 USD |
+| Total upfront cost: | 23,268.00 USD |
+
+References:
+- [Amazon Elasticsearch Service pricing](https://amazonaws-china.com/elasticsearch-service/pricing/)
+- [Configure Amazon Elasticsearch Service](https://calculator.aws/#/createCalculator)
+
+Data templates in Elasticsearch or Elasticsearch Service:
 
 - users template
 
@@ -364,6 +296,10 @@ PUT _index_template/orders
   "template": {
     "settings": {
       "index": {
+        "lifecycle": {
+          "name": "orders",
+          "rollover_alias": "orders"
+        },        
         "refresh_interval": "1s",
         "number_of_shards": "3",
         "number_of_replicas": "2"
@@ -398,28 +334,62 @@ PUT _index_template/orders
   "version": 1
 }
 
-// we can query orders-202008 for a range data or orders for all data
-POST /_aliases
+PUT _ilm/policy/orders
 {
-  "actions" : [
-    { "add" : { "index" : "orders-*", "alias" : "orders" } }
-  ]
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_size": "30GB",
+            "max_age": "30d"
+          },
+          "set_priority": {
+            "priority": 100
+          }
+        }
+      },
+      "warm": {
+        "actions": {
+          "readonly" : { },
+          "set_priority": {
+            "priority": 50
+          }
+        }
+      }
+    }
+  }
+}
+
+PUT orders-000001
+{
+  "aliases": {
+    "orders":{
+      "is_write_index": true 
+    }
+  }
 }
 ```
 
 - messages template
   - we do not search by message
   - keeping 1 year message history
-  - creating new index for messages daily
+  - creating new index for messages weekly
 
 ```json
+PUT _index_template/messages
 {
   "index_patterns": [
     "messages-*"
   ],
   "template": {
     "settings": {
-      "index": {      
+      "index": {    
+        "lifecycle": {
+          "name": "messages",
+          "rollover_alias": "messages"
+        },            
         "refresh_interval": "1s",
         "number_of_shards": "3",
         "number_of_replicas": "2"
@@ -438,6 +408,7 @@ POST /_aliases
           "type": "keyword"
         },
         "message": {
+          "type": "text",
           "index": false
         },        
         "created_at": {
@@ -451,11 +422,112 @@ POST /_aliases
   "version": 1
 }
 
-// we can query messages-20200808 for a range data or messages for all data
-POST /_aliases
+PUT _ilm/policy/messages
 {
-  "actions" : [
-    { "add" : { "index" : "messages-*", "alias" : "messages" } }
-  ]
+  "policy": {
+    "phases": {
+      "hot": {
+        "min_age": "0ms",
+        "actions": {
+          "rollover": {
+            "max_size": "30GB",
+            "max_age": "7d"
+          },
+          "set_priority": {
+            "priority": 100
+          }
+        }
+      },
+      "warm": {
+        "actions": {
+          "readonly" : { },
+          "set_priority": {
+            "priority": 50
+          }
+        }
+      },
+      "delete": {
+        "min_age": "365d",
+        "actions": {
+          "delete": {
+            "delete_searchable_snapshot": true
+          }
+        }
+      }      
+    }
+  }
+}
+
+PUT messages-000001
+{
+  "aliases": {
+    "messages":{
+      "is_write_index": true 
+    }
+  }
 }
 ```
+
+QAs:
+
+Q: How to load streaming data into Elasticsearch
+- Application write directly
+- Logstash
+- Lambda
+
+```python
+import boto3
+import json
+import requests
+from requests_aws4auth import AWS4Auth
+
+region = '' # e.g. us-west-1
+service = 'es'
+credentials = boto3.Session().get_credentials()
+awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, service, session_token=credentials.token)
+
+host = '' # the Amazon ES domain, including https://
+headers = { "Content-Type": "application/json" }
+
+def lambda_handler(event, context):
+  #print("Received event: " + json.dumps(event, indent=2))
+
+  index = event['index']
+  url = host + '/' + index + '/_doc/'
+
+  operation = event['httpMethod']
+  if operation == 'DELETE':
+    id = event['id']
+    return requests.delete(url + id, auth=awsauth)
+  else:
+    document = event['doc']
+    return requests.post(url, auth=awsauth, json=document, headers=headers)     
+```
+
+Q: Most of the operation of the data is quite simple query, but also has some complex query.
+- We could use elasticsearch for complex query, ex: query friends by name, age or email
+- We could only use keyword type for string in elasticsearch for query if we do not care about fulltext search.
+
+
+### ElatiCache
+
+QAs:
+
+Q: They would like to develop the global uniform game in the future. So they need the database can be launched in many regions to speed up the data access of the players in the world.
+- We could load some data (lookup, static, session or hot data) from cassandra into Redis Cluster to speed up the data access
+
+
+### Glue for ETL
+
+QAs:
+
+Q: Their games just need 1 year data in most case, the history data would be used for analytics.
+- We could archive history data into S3 with csv format for analytics, like recommendation feature. [Connect to Cassandra Data in AWS Glue Jobs Using JDBC](https://www.cdata.com/kb/tech/cassandra-jdbc-aws-glue.rst)
+
+
+### Personalize for recommendation
+
+QAs:
+
+Q: They would like to add recommendation feature based on relationships between information such as player interests, friends, and purchase history etc.
+- Yes
