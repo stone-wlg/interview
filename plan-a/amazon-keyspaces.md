@@ -81,3 +81,6 @@ Read request units	$0.331 per million read request units
 | | Greater than 150 TB/month	$0.08 per GB |
 
 *** As part of the AWS Free Tier, you can get started with Amazon Keyspaces for free. For the first three months, you are offered a monthly free tier of 30 million on-demand write request units, 30 million on-demand read request units, and 1 GB of storage (limit of one free tier per payer account). Your free tier starts from the first month when you create your first Amazon Keyspaces resource. ***
+
+Server-side encryption at rest is enabled on all Amazon Keyspaces table data and cannot be disabled. You cannot encrypt only a subset of items in a table.
+
